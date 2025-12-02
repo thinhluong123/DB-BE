@@ -1,37 +1,52 @@
 const jwt = require('jsonwebtoken');
+const createHttpError = require('http-errors');
+const config = require('../config/env');
 
-function authRequired(req, res, next) {
-  const authHeader = req.headers.authorization || '';
-  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-
-  if (!token) {
-    return res.status(401).json({ success: false, message: 'Unauthorized' });
+const authenticate = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return next(createHttpError(401, 'Authorization header is missing'));
   }
 
+  const token = authHeader.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
-    req.user = {
-      id: decoded.id,
-      role: decoded.role
-    };
+    const payload = jwt.verify(token, config.jwt.secret);
+    req.user = payload;
     return next();
-  } catch (err) {
-    return res.status(401).json({ success: false, message: 'Invalid token' });
+  } catch (error) {
+    return next(createHttpError(401, 'Invalid or expired token'));
   }
-}
-
-function requireRole(role) {
-  return (req, res, next) => {
-    if (!req.user || req.user.role !== role) {
-      return res.status(403).json({ success: false, message: 'Forbidden' });
-    }
-    return next();
-  };
-}
-
-module.exports = {
-  authRequired,
-  requireRole
 };
 
+const optionalAuth = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return next();
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const payload = jwt.verify(token, config.jwt.secret);
+    req.user = payload;
+  } catch (error) {
+    // ignore invalid token for optional auth
+  }
+  return next();
+};
+
+const authorizeRoles = (...roles) => (req, res, next) => {
+  if (!req.user) {
+    return next(createHttpError(401, 'Unauthorized'));
+  }
+  if (!roles.includes(req.user.role)) {
+    return next(createHttpError(403, 'Forbidden'));
+  }
+  return next();
+};
+
+module.exports = {
+  authenticate,
+  optionalAuth,
+  authorizeRoles,
+};
 

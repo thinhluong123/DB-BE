@@ -1,35 +1,42 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const morgan = require('morgan');
-const path = require('path');
-const dotenv = require('dotenv');
-
-// Load env
-dotenv.config({ path: path.join(__dirname, '..', '.env') });
-
-const { notFoundHandler, errorHandler } = require('./middlewares/errorHandler');
-const apiRouter = require('./routes');
+const routes = require('./routes');
+const config = require('./config/env');
+const { notFoundHandler, errorHandler } = require('./middlewares/errorMiddleware');
 
 const app = express();
 
-// Middlewares
-app.use(cors());
-app.use(express.json());
+const allowedOrigins = config.app.clientOrigins || ['*'];
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+  }),
+);
+
+app.use(helmet());
+app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
-app.use(morgan('dev'));
+app.use(morgan(config.app.env === 'production' ? 'combined' : 'dev'));
 
-// API routes
-app.use('/api', apiRouter);
+app.get('/health', (req, res) =>
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+  }),
+);
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ success: true, message: 'OK' });
-});
+app.use('/api', routes);
 
-// 404 & error handlers
 app.use(notFoundHandler);
 app.use(errorHandler);
 
 module.exports = app;
-
 

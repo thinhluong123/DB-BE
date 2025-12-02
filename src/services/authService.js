@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const createHttpError = require('http-errors');
 const userModel = require('../models/userModel');
+const candidateModel = require('../models/candidateModel');
 const config = require('../config/env');
 
 const normalizeRole = (role, userRecord) => {
@@ -37,10 +38,16 @@ const generateToken = (payload) =>
     expiresIn: config.jwt.expiresIn,
   });
 
-const login = async ({ email, password, role }) => {
+const login = async (payload = {}) => {
+  // Hỗ trợ cả Email/email và Password/password từ frontend
+  const email = payload.email || payload.Email;
+  const password = payload.password || payload.Password;
+  const role = payload.role;
+
   if (!email || !password) {
     throw createHttpError(400, 'Email và mật khẩu là bắt buộc');
   }
+
   const userRecord = await userModel.getUserByEmail(email);
   if (!userRecord) {
     throw createHttpError(401, 'Email hoặc mật khẩu không đúng');
@@ -73,6 +80,71 @@ const login = async ({ email, password, role }) => {
     token,
     user: safeUser,
     role: resolvedRole,
+  };
+};
+
+const registerCandidate = async (payload = {}) => {
+  const fullNameRaw = payload.fullName || payload.FullName || '';
+  const username = payload.username || payload.Username;
+  const email = payload.email || payload.Email;
+  const password = payload.password || payload.Password;
+
+  if (!fullNameRaw || !username || !email || !password) {
+    throw createHttpError(400, 'Họ tên, username, email và mật khẩu là bắt buộc');
+  }
+
+  // Kiểm tra email đã tồn tại chưa
+  const existing = await userModel.getUserByEmail(email);
+  if (existing) {
+    throw createHttpError(409, 'Email đã được sử dụng');
+  }
+
+  // Tách họ và tên
+  const nameParts = fullNameRaw.trim().split(/\s+/);
+  const FName = nameParts[0] || '';
+  const LName = nameParts.slice(1).join(' ') || FName;
+
+  // Hash mật khẩu
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  // Tạo user mới trong bảng user
+  const userId = await userModel.createUser({
+    Username: username,
+    Email: email,
+    Password: hashedPassword,
+    FName,
+    LName,
+    Address: payload.address || 'Chưa cập nhật',
+    Phonenume: payload.phone || payload.Phonenume || '0000000000',
+    Profile_Picture: payload.Profile_Picture || null,
+    Bdate: payload.Bdate || '2000-01-01',
+  });
+
+  // Gắn vào bảng candidate để login nhận diện là ứng viên
+  await candidateModel.createCandidate(userId);
+
+  const safeUser = {
+    id: userId,
+    username,
+    email,
+    fullName: `${FName} ${LName}`.trim(),
+    role: 'candidate',
+    candidateId: userId,
+    employerId: null,
+  };
+
+  const token = generateToken({
+    userId: safeUser.id,
+    role: safeUser.role,
+    email: safeUser.email,
+    candidateId: safeUser.candidateId,
+    employerId: null,
+  });
+
+  return {
+    token,
+    user: safeUser,
+    role: 'candidate',
   };
 };
 
@@ -111,6 +183,7 @@ const getProfile = async (payload = {}) => {
 
 module.exports = {
   login,
+  registerCandidate,
   getProfile,
 };
 
