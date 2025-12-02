@@ -10,6 +10,15 @@ const favoriteJob = async (req, res, next) => {
   }
 };
 
+const unfavoriteJob = async (req, res, next) => {
+  try {
+    const data = await candidateService.unfavoriteJob(req.params.jobId, { ...req.body, ...req.query });
+    return successResponse(res, data, 'Job removed from favorites successfully');
+  } catch (error) {
+    return next(error);
+  }
+};
+
 const applyJob = async (req, res, next) => {
   try {
     const data = await candidateService.applyJob(req.params.jobId, req.body);
@@ -30,7 +39,7 @@ const checkJobStatus = async (req, res, next) => {
 
 const getDashboard = async (req, res, next) => {
   try {
-    const data = await candidateService.getDashboard({ ...req.query, ...req.body });
+    const data = await candidateService.getDashboard(req.query);
     return successResponse(res, data, 'Candidate dashboard retrieved successfully');
   } catch (error) {
     return next(error);
@@ -47,7 +56,7 @@ const logout = async (req, res, next) => {
 
 const getApplications = async (req, res, next) => {
   try {
-    const data = await candidateService.listApplications({ ...req.query, ...req.body }, req.query);
+    const data = await candidateService.listApplications(req.query, req.query);
     return res.status(200).json({
       success: true,
       data: {
@@ -61,12 +70,23 @@ const getApplications = async (req, res, next) => {
   }
 };
 
+const getFavorites = async (req, res, next) => {
+  try {
+    const favorites = await candidateService.getFavorites(req.query);
+    return successResponse(res, favorites, 'Favorites retrieved successfully');
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   favoriteJob,
+  unfavoriteJob,
   applyJob,
   checkJobStatus,
   getDashboard,
   logout,
   getApplications,
+  getFavorites,
 };
 

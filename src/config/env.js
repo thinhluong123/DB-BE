@@ -7,10 +7,10 @@ dotenv.config({ path: envPath, override: true });
 const config = {
   app: {
     env: process.env.NODE_ENV || 'development',
-    port: parseInt(process.env.PORT || '3001', 10),
+    port: parseInt(process.env.PORT || '5000', 10),
     clientOrigins: process.env.CLIENT_URL
       ? process.env.CLIENT_URL.split(',').map((origin) => origin.trim())
-      : ['http://localhost:5173'],
+      : ['http://localhost:3000'],
   },
   db: {
     host: process.env.DB_HOST || 'localhost',

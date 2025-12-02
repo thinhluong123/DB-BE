@@ -12,6 +12,7 @@ router.patch('/:jobId/status', employerController.updateJobStatus);
 router.delete('/:jobId', employerController.deleteJob);
 router.get('/:jobId/applications', applicationController.getJobApplications);
 router.post('/:jobId/favorite', candidateController.favoriteJob);
+router.delete('/:jobId/favorite', candidateController.unfavoriteJob);
 router.post('/:jobId/apply', candidateController.applyJob);
 router.get('/:jobId/check-status', candidateController.checkJobStatus);
 router.get('/:jobId', jobController.getJobById);

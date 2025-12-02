@@ -27,6 +27,36 @@ const addFavourite = async (candidateId, jobId) =>
     [candidateId, jobId],
   );
 
+const removeFavourite = async (candidateId, jobId) =>
+  executeQuery(`DELETE FROM favourite WHERE CandidateID = ? AND JobID = ?`, [candidateId, jobId]);
+
+const getFavouriteJobs = async (candidateId) =>
+  executeQuery(
+    `
+    SELECT 
+      f.JobID,
+      f.Date,
+      j.JobName,
+      j.JobType,
+      j.ContractType,
+      j.Level,
+      j.Location,
+      j.SalaryFrom,
+      j.SalaryTo,
+      j.JobStatus,
+      j.ExpireDate,
+      c.CompanyID,
+      c.CName AS CompanyName,
+      c.Logo AS CompanyLogo
+    FROM favourite f
+    JOIN job j ON j.JobID = f.JobID
+    LEFT JOIN company c ON c.EmployerID = j.EmployerID
+    WHERE f.CandidateID = ?
+    ORDER BY f.Date DESC
+  `,
+    [candidateId],
+  );
+
 const isJobFavorited = async (candidateId, jobId) => {
   const rows = await executeQuery('SELECT 1 FROM favourite WHERE CandidateID = ? AND JobID = ?', [candidateId, jobId]);
   return rows.length > 0;
@@ -174,6 +204,7 @@ module.exports = {
   toPositiveInt,
   ensureCandidateExists,
   addFavourite,
+  removeFavourite,
   isJobFavorited,
   isJobApplied,
   addApplication,
@@ -182,5 +213,6 @@ module.exports = {
   getRecentApplications,
   listCandidateApplications,
   countCandidateApplications,
+  getFavouriteJobs,
 };
 

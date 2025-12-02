@@ -1,10 +1,11 @@
 const publicService = require('../services/publicService');
-const { successResponse } = require('../utils/response');
 
 const getStats = async (req, res, next) => {
   try {
     const stats = await publicService.getHomepageStats();
-    return successResponse(res, stats, 'Statistics retrieved successfully');
+    // Trả về trực tiếp mảng để frontend có thể dùng .map()
+    // Frontend HomePage đang expect: [ { icon, number, label }, ... ]
+    return res.status(200).json(stats);
   } catch (error) {
     return next(error);
   }
@@ -13,7 +14,8 @@ const getStats = async (req, res, next) => {
 const getCategories = async (req, res, next) => {
   try {
     const categories = await publicService.getJobCategories();
-    return successResponse(res, categories, 'Categories retrieved successfully');
+    // Trả về trực tiếp mảng category cho HomePage (categories.map(...))
+    return res.status(200).json(categories);
   } catch (error) {
     return next(error);
   }
@@ -23,7 +25,8 @@ const getTopCompanies = async (req, res, next) => {
   try {
     const limit = Number.isFinite(Number(req.query.limit)) ? Number(req.query.limit) : 8;
     const companies = await publicService.getTopCompanies(limit);
-    return successResponse(res, companies, 'Companies retrieved successfully');
+    // Trả về trực tiếp mảng company cho HomePage (topCompanies.map(...))
+    return res.status(200).json(companies);
   } catch (error) {
     return next(error);
   }

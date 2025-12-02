@@ -29,6 +29,19 @@ const favoriteJob = async (jobIdRaw, requestData) => {
   };
 };
 
+const unfavoriteJob = async (jobIdRaw, requestData) => {
+  const jobId = parseInt(jobIdRaw, 10);
+  if (Number.isNaN(jobId)) {
+    throw createHttpError(400, 'JobID must be a number');
+  }
+  const candidateId = await resolveCandidateId(requestData);
+  await candidateModel.removeFavourite(candidateId, jobId);
+  return {
+    JobID: jobId,
+    favorited: false,
+  };
+};
+
 const applyJob = async (jobIdRaw, payload) => {
   const jobId = parseInt(jobIdRaw, 10);
   if (Number.isNaN(jobId)) {
@@ -133,11 +146,38 @@ const listApplications = async (requestData, query = {}) => {
   };
 };
 
+const getFavorites = async (requestData) => {
+  const candidateId = await resolveCandidateId(requestData);
+  const rows = await candidateModel.getFavouriteJobs(candidateId);
+
+  return rows.map((item) => ({
+    JobID: item.JobID,
+    JobName: item.JobName,
+    JobType: item.JobType,
+    ContractType: item.ContractType,
+    Level: item.Level,
+    Location: item.Location,
+    Salary: formatCurrencyRange(item.SalaryFrom, item.SalaryTo),
+    SalaryFrom: item.SalaryFrom,
+    SalaryTo: item.SalaryTo,
+    JobStatus: item.JobStatus,
+    ExpireDate: formatDate(item.ExpireDate),
+    Company: {
+      CompanyID: item.CompanyID,
+      CompanyName: item.CompanyName,
+      CompanyLogo: item.CompanyLogo,
+    },
+    savedAt: formatDate(item.Date),
+  }));
+};
+
 module.exports = {
   favoriteJob,
+  unfavoriteJob,
   applyJob,
   checkJobStatus,
   getDashboard,
   listApplications,
+  getFavorites,
 };
 
