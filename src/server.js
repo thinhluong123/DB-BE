@@ -1,25 +1,24 @@
 const http = require('http');
 const app = require('./app');
-const config = require('./config/env');
-const { pool } = require('./config/database');
+const { initDb } = require('./config/db');
 
-const startServer = async () => {
+const PORT = process.env.PORT || 5000;
+
+async function start() {
   try {
-    const connection = await pool.getConnection();
-    await connection.ping();
-    connection.release();
-  } catch (error) {
+    await initDb();
+    const server = http.createServer(app);
+    server.listen(PORT, () => {
+      // eslint-disable-next-line no-console
+      console.log(`Server listening on port ${PORT}`);
+    });
+  } catch (err) {
     // eslint-disable-next-line no-console
-    console.error('Cannot connect to MySQL. Please check your credentials.', error);
+    console.error('Failed to start server', err);
     process.exit(1);
   }
+}
 
-  const server = http.createServer(app);
-  server.listen(config.app.port, () => {
-    // eslint-disable-next-line no-console
-    console.log(`🚀 Server listening on port ${config.app.port}`);
-  });
-};
+start();
 
-startServer();
 

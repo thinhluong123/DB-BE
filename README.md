@@ -1,58 +1,109 @@
-# Backend System
+## Backend ITviec clone (Candidate & Employer)
 
-Hệ thống Backend API sử dụng Node.js, Express và MySQL.
+Backend Node.js + Express, MySQL, kiến trúc gần MVC, phục vụ cho frontend trong thư mục `DB-FE`.
 
-## Yêu cầu
+### 1. Chạy backend
 
-- [Node.js](https://nodejs.org/) (Khuyên dùng bản LTS)
-- MySQL Server
+- Yêu cầu: Node 18+, MySQL đang chạy, đã import schema từ `../btl2.sql` (database `btl2`).
+- Vào thư mục `backend` và cài dependency:
+  - Nếu dùng PowerShell bị chặn script, hãy mở CMD hoặc terminal khác:
+  - `cd backend`
+  - `npm install`
+- Tạo file `.env` trong `backend/src` hoặc `backend` (tuỳ cách bạn chạy) với nội dung ví dụ:
 
-## Cài đặt
+```env
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=btl2
+JWT_SECRET=supersecret
+JWT_EXPIRES_IN=7d
+PORT=3001
+```
 
-1. Clone dự án và di chuyển vào thư mục backend:
+- Chạy dev:
 
-   ```bash
-   cd backend
-   ```
+```bash
+npm run dev
+```
 
-2. Cài đặt các thư viện:
-   ```bash
-   npm install
-   ```
+Server sẽ lắng nghe tại `http://localhost:3001`.
 
-## Cấu hình
+### 2. Cấu trúc chính
 
-1. Tạo file môi trường `.env` từ file mẫu:
+- `src/app.js`: khởi tạo Express app, middlewares, mount `/api`.
+- `src/server.js`: khởi động HTTP server, init kết nối MySQL.
+- `src/config/db.js`: kết nối & pool MySQL (dùng `mysql2/promise`).
+- `src/middlewares`:
+  - `authMiddleware.js`: verify JWT, phân quyền `CANDIDATE` / `EMPLOYER`.
+  - `errorHandler.js`: 404 + error handler chung.
+  - `validate.js`: validate đơn giản cho pagination.
+- `src/utils`: `response.js`, `pagination.js`.
+- `src/models`: các hàm truy cập DB cho `user`, `candidate`, `employer`.
+- `src/controllers`: logic cho từng nhóm API (auth, employer, job, candidate, stats, application).
+- `src/routes`:
+  - `auth.routes.js`: `/api/auth/*`
+  - `employer.routes.js`: `/api/employer/*`
+  - `job.routes.js`: `/api/jobs/*`
+  - `candidate.routes.js`: `/api/candidate/*`
+  - `application.routes.js`: `/api/applications/*`
+  - `index.js`: gộp tất cả vào `/api`.
 
-   - Trên Windows (CMD/PowerShell):
-     ```bash
-     copy env.example .env
-     ```
-   - Trên Linux/Mac:
-     ```bash
-     cp env.example .env
-     ```
+### 3. Nhóm endpoint chính (bám theo các file spec)
 
-2. Mở file `.env` và cập nhật thông tin cấu hình cho phù hợp với máy của bạn:
+- **Employer dashboard** (`api_need for dashboard.md`):
+  - `GET /api/employer/:employerId/stats`
+  - `GET /api/employer/:employerId/jobs`
+  - `GET /api/jobs/:jobId/applications`
+  - `GET /api/employer/:employerId/saved-candidates`
+  - `POST /api/jobs`
+  - `PATCH /api/jobs/:jobId/status`
+  - `DELETE /api/jobs/:jobId`
+  - `PATCH /api/applications/:jobId/:candidateId/status`
+  - `POST /api/employer/:employerId/follow/:candidateId`
+  - `DELETE /api/employer/:employerId/follow/:candidateId`
+  - `GET /api/employer/:employerId/notifications`
+  - `GET /api/employer/:employerId`
+  - `GET /api/employer/:employerId/company`
 
-   ```env
-   # Server Port
-   PORT=3001
+- **Public & job APIs** (`api-needed.md`):
+  - `GET /api/stats`
+  - `GET /api/categories`
+  - `GET /api/companies/top`
+  - `GET /api/jobs`
+  - `GET /api/jobs/:jobId`
+  - `POST /api/jobs/:jobId/favorite`
+  - `POST /api/jobs/:jobId/apply`
+  - `GET /api/jobs/:jobId/check-status`
+  - `GET /api/candidate/dashboard`
+  - `POST /api/candidate/logout`
+  - `GET /api/candidate/applications`
 
-   # Database (MySQL)
-   DB_HOST=localhost
-   DB_USER=root
-   DB_PASSWORD=your_password
-   DB_NAME=btl2
+- **Candidate profile** (`api_need for profile.md`):
+  - `GET /api/candidate/profile`
+  - `PUT /api/candidate/profile`
+  - `POST /api/candidate/avatar`
+  - `GET /api/candidate/resumes`
+  - `POST /api/candidate/resumes`
+  - `DELETE /api/candidate/resumes/:id`
+  - `PUT /api/candidate/password`
+  - `GET /api/candidate/notifications`
+  - `PUT /api/candidate/notifications/:id/read`
+  - `PUT /api/candidate/notifications/read-all`
+  - `DELETE /api/candidate/notifications/:id`
+  - `GET /api/candidate/notifications/unread`
 
-   # Security
-   JWT_SECRET=your_super_secret_key
-   ```
+### 4. Auth & tích hợp với frontend
 
-## Chạy dự án
+- Đăng ký: `POST /api/auth/register` (body có `role: "CANDIDATE" | "EMPLOYER"`).
+- Đăng nhập: `POST /api/auth/login` → trả về `{ token, role }`.
+- FE cần lưu `token` (ví dụ `localStorage.authToken`) rồi gửi kèm header:
 
-  ```bash
-  npm run dev
-  ```
+```http
+Authorization: Bearer <token>
+```
 
-Server sẽ chạy tại: `http://localhost:3001` (hoặc port bạn đã cấu hình).
+- Các service trong `DB-FE/src/services/*.js` có thể trỏ `REACT_APP_API_URL=http://localhost:5000/api`.
+
+

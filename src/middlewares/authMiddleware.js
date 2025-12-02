@@ -1,52 +1,37 @@
 const jwt = require('jsonwebtoken');
-const createHttpError = require('http-errors');
-const config = require('../config/env');
 
-const authenticate = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return next(createHttpError(401, 'Authorization header is missing'));
+function authRequired(req, res, next) {
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'Unauthorized' });
   }
 
-  const token = authHeader.split(' ')[1];
   try {
-    const payload = jwt.verify(token, config.jwt.secret);
-    req.user = payload;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+    req.user = {
+      id: decoded.id,
+      role: decoded.role
+    };
     return next();
-  } catch (error) {
-    return next(createHttpError(401, 'Invalid or expired token'));
+  } catch (err) {
+    return res.status(401).json({ success: false, message: 'Invalid token' });
   }
-};
+}
 
-const optionalAuth = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+function requireRole(role) {
+  return (req, res, next) => {
+    if (!req.user || req.user.role !== role) {
+      return res.status(403).json({ success: false, message: 'Forbidden' });
+    }
     return next();
-  }
-
-  const token = authHeader.split(' ')[1];
-  try {
-    const payload = jwt.verify(token, config.jwt.secret);
-    req.user = payload;
-  } catch (error) {
-    // ignore invalid token for optional auth
-  }
-  return next();
-};
-
-const authorizeRoles = (...roles) => (req, res, next) => {
-  if (!req.user) {
-    return next(createHttpError(401, 'Unauthorized'));
-  }
-  if (!roles.includes(req.user.role)) {
-    return next(createHttpError(403, 'Forbidden'));
-  }
-  return next();
-};
+  };
+}
 
 module.exports = {
-  authenticate,
-  optionalAuth,
-  authorizeRoles,
+  authRequired,
+  requireRole
 };
+
 

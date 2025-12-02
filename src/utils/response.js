@@ -1,28 +1,18 @@
-const successResponse = (res, data, message = 'Success', statusCode = 200) =>
-  res.status(statusCode).json({
-    success: true,
-    data,
-    message,
-  });
+function success(res, data = null, message = 'OK', status = 200) {
+  const payload = { success: true, message };
+  if (data !== null) payload.data = data;
+  return res.status(status).json(payload);
+}
 
-const paginatedResponse = (res, data, pagination, message = 'Success', statusCode = 200) =>
-  res.status(statusCode).json({
-    success: true,
-    data,
-    pagination,
-    message,
-  });
-
-const errorResponse = (res, statusCode, message = 'Something went wrong', errors = undefined) =>
-  res.status(statusCode).json({
-    success: false,
-    message,
-    errors,
-  });
+function fail(res, message = 'Bad request', status = 400, errors = null) {
+  const payload = { success: false, message };
+  if (errors) payload.errors = errors;
+  return res.status(status).json(payload);
+}
 
 module.exports = {
-  successResponse,
-  paginatedResponse,
-  errorResponse,
+  success,
+  fail
 };
+
 
