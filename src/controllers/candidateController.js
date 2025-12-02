@@ -148,8 +148,15 @@ const changePassword = async (req, res, next) => {
 // ===== Notifications =====
 const getNotifications = async (req, res, next) => {
   try {
-    const data = await candidateService.getNotifications(req.query);
-    return successResponse(res, data, 'Notifications retrieved successfully');
+    const { notifications, unreadCount } = await candidateService.getNotifications(req.query);
+    return res.status(200).json({
+      success: true,
+      data: {
+        notifications,
+        unreadCount,
+      },
+      message: 'Notifications retrieved successfully',
+    });
   } catch (error) {
     return next(error);
   }

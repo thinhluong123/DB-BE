@@ -345,6 +345,7 @@ module.exports = {
       limit: requestData.limit || 10,
     });
 
+    // LIMIT / OFFSET đã được chuẩn hoá thành số, nên có thể nội suy trực tiếp
     const rows = await executeQuery(
       `
       SELECT 
@@ -357,19 +358,14 @@ module.exports = {
       FROM notification
       WHERE CandidateID = ?
       ORDER BY \`Time\` DESC
-      LIMIT ? OFFSET ?
+      LIMIT ${limit} OFFSET ${offset}
     `,
-      [candidateId, limit, offset],
-    );
-
-    const countRows = await executeQuery(
-      'SELECT COUNT(*) AS total FROM notification WHERE CandidateID = ?',
       [candidateId],
     );
 
     const notifications = rows.map((item) => ({
       id: item.nID,
-      type: 'application',
+      type: requestData.type || 'application',
       title: item.Title,
       message: item.Content,
       company: null,
@@ -379,8 +375,9 @@ module.exports = {
 
     return {
       notifications,
-      pagination: buildPaginationMeta(page, limit, countRows[0]?.total || 0),
-      unreadCount: 0,
+      // frontend spec chỉ cần notifications + unreadCount; pagination giữ nội bộ nếu cần
+      pagination: buildPaginationMeta(page, limit, notifications.length),
+      unreadCount: notifications.length,
     };
   },
 
