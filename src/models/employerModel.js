@@ -184,14 +184,15 @@ const getEmployerProfile = async (employerId) => {
       u.Phonenumber AS Phonenumber,
       u.Address,
       u.Profile_Picture,
-      e.PackageName,
+      pur.PackageName,
       e.NumberOfOpenedJob,
-      p.cost,
-      p.desciption,
-      p.time
+      pkg.cost,
+      pkg.desciption,
+      pkg.time
     FROM employer e
     JOIN user u ON e.ID = u.ID
-    LEFT JOIN package p ON e.PackageName = p.PackageName
+    LEFT JOIN purchase pur ON e.ID = pur.EmpID
+    LEFT JOIN package pkg ON pur.PackageName = pkg.PackageName
     WHERE e.ID = ?
   `,
     [employerId],
