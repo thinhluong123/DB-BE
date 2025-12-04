@@ -173,8 +173,8 @@ const fetchJobApplicationStats = async (jobId) => {
     `
     SELECT
       COUNT(*) AS total,
-      SUM(CASE WHEN Status_apply = 'Đã duyệt' THEN 1 ELSE 0 END) AS approved,
-      SUM(CASE WHEN Status_apply = 'Từ chối' THEN 1 ELSE 0 END) AS declined
+      SUM(CASE WHEN Status_apply IN ('Duyet', 'Approved') THEN 1 ELSE 0 END) AS approved,
+      SUM(CASE WHEN Status_apply IN ('Tu choi', 'Declined') THEN 1 ELSE 0 END) AS declined
     FROM apply
     WHERE JobID = ?
   `,

@@ -207,7 +207,7 @@ module.exports = {
       maritalStatus: null,
       biography: null,
       location: user.Address || null,
-      phone: user.Phonenumber || null,
+      phone: user.Phonenume || null,
       email: user.Email || null,
       socialLinks: [],
       notifications: {
@@ -237,7 +237,7 @@ module.exports = {
       fields.LName = parts.slice(1).join(' ') || parts[0];
     }
     if (payload.location) fields.Address = payload.location;
-    if (payload.phone) fields.Phonenumber = payload.phone;
+    if (payload.phone) fields.Phonenume = payload.phone;
     if (payload.dateOfBirth) fields.Bdate = payload.dateOfBirth;
 
     if (Object.keys(fields).length) {

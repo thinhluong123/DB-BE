@@ -61,7 +61,7 @@ const getJobApplications = async (jobId, statusFilter, limit = 20, offset = 0) =
       u.FName,
       u.LName,
       u.Email,
-      u.Phonenumber AS Phonenumber,
+      u.Phonenume AS Phonenumber,
       u.Profile_Picture,
       u.Address,
       p.YearOfExperience,
@@ -112,9 +112,9 @@ const getApplicationStatistics = async (jobId) => {
     `
     SELECT
       COUNT(*) AS total,
-      SUM(CASE WHEN a.Status_apply = 'Đang duyệt' THEN 1 ELSE 0 END) AS pending,
-      SUM(CASE WHEN a.Status_apply = 'Đã duyệt' THEN 1 ELSE 0 END) AS approved,
-      SUM(CASE WHEN a.Status_apply = 'Từ chối' THEN 1 ELSE 0 END) AS rejected
+      SUM(CASE WHEN a.Status_apply IN ('Dang duyet', 'Pending') THEN 1 ELSE 0 END) AS pending,
+      SUM(CASE WHEN a.Status_apply IN ('Duyet', 'Approved') THEN 1 ELSE 0 END) AS approved,
+      SUM(CASE WHEN a.Status_apply IN ('Tu choi', 'Rejected') THEN 1 ELSE 0 END) AS rejected
     FROM apply a
     WHERE a.JobID = ?
   `,
