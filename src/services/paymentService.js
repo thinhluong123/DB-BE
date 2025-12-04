@@ -23,12 +23,7 @@ const PAYOS_BASE_URL = process.env.PAYOS_BASE_URL || 'https://api-merchant.payos
 
 /**
  * Tạo link thanh toán PayOS
- * @param {Object} params - Thông tin thanh toán
- * @param {number} params.orderCode - Mã đơn hàng (unique)
- * @param {number} params.amount - Số tiền (VND)
- * @param {string} params.description - Mô tả đơn hàng
- * @param {string} params.cancelUrl - URL hủy thanh toán
- * @param {string} params.returnUrl - URL trả về sau thanh toán
+ * @param {Object} params - Thông tin thanh toán {orderCode: number, amount: number, description: string, cancelUrl: string, returnUrl: string}
  * @returns {Promise<Object>} Link thanh toán
  */
 const createPayOSLink = async (params) => {
