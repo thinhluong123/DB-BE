@@ -38,15 +38,24 @@ const authorizeRoles = (...roles) => (req, res, next) => {
   if (!req.user) {
     return next(createHttpError(401, 'Unauthorized'));
   }
-  if (!roles.includes(req.user.role)) {
+  // Hỗ trợ cả uppercase và lowercase
+  const userRole = req.user.role?.toLowerCase();
+  const allowedRoles = roles.map((r) => r.toLowerCase());
+  if (!allowedRoles.includes(userRole)) {
     return next(createHttpError(403, 'Forbidden'));
   }
   return next();
 };
 
+// Aliases cho backward compatibility
+const authRequired = authenticate;
+const requireRole = authorizeRoles;
+
 module.exports = {
   authenticate,
   optionalAuth,
   authorizeRoles,
+  authRequired,
+  requireRole,
 };
 

@@ -104,7 +104,7 @@ const getSavedCandidates = async (employerId, page = 1, limit = 20) => {
       u.FName,
       u.LName,
       u.Email,
-      u.Phonenume AS Phonenumber,
+      u.Phonenumber AS Phonenumber,
       u.Profile_Picture,
       u.Address,
       p.YearOfExperience,
@@ -181,20 +181,28 @@ const getEmployerProfile = async (employerId) => {
       u.Email,
       u.FName,
       u.LName,
-      u.Phonenume AS Phonenumber,
+      u.Phonenumber AS Phonenumber,
       u.Address,
       u.Profile_Picture,
-      e.PackageName,
       e.NumberOfOpenedJob,
+      pur.PackageName,
       p.cost,
       p.desciption,
-      p.time
+      p.time,
+      pur.purchaseDate
     FROM employer e
     JOIN user u ON e.ID = u.ID
-    LEFT JOIN package p ON e.PackageName = p.PackageName
+    LEFT JOIN (
+      SELECT EmpID, PackageName, purchaseDate
+      FROM purchase
+      WHERE EmpID = ?
+      ORDER BY purchaseDate DESC
+      LIMIT 1
+    ) pur ON pur.EmpID = e.ID
+    LEFT JOIN package p ON pur.PackageName = p.PackageName
     WHERE e.ID = ?
   `,
-    [employerId],
+    [employerId, employerId],
   );
   return rows[0];
 };
@@ -349,6 +357,9 @@ const updateJobStatus = async (jobId, status) => {
   return result.affectedRows || 0;
 };
 
+const createEmployer = async (userId) =>
+  executeQuery('INSERT INTO employer (ID) VALUES (?)', [userId]);
+
 module.exports = {
   getDashboardStats,
   getEmployerJobs,
@@ -362,5 +373,6 @@ module.exports = {
   deleteJobById,
   createJobRecord,
   updateJobStatus,
+  createEmployer,
 };
 
