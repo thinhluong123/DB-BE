@@ -1,7 +1,6 @@
 const express = require('express');
 const { authRequired, requireRole } = require('../middlewares/authMiddleware');
 const employerController = require('../controllers/employerController');
-const jobController = require('../controllers/jobController');
 const purchaseController = require('../controllers/purchaseController');
 
 const router = express.Router();
@@ -13,16 +12,16 @@ router.use(authRequired, requireRole('EMPLOYER'));
 router.post('/purchase', purchaseController.createPurchase);
 
 router.get('/:employerId/stats', employerController.getStats);
-router.get('/:employerId/jobs', employerController.getEmployerJobs);
+router.get('/:employerId/jobs', employerController.getJobs);
 router.get('/:employerId/saved-candidates', employerController.getSavedCandidates);
 router.get('/:employerId/notifications', employerController.getNotifications);
 router.get('/:employerId/packages', purchaseController.getPurchasesByEmployer);
-router.get('/:employerId', employerController.getEmployerInfo);
+router.get('/:employerId', employerController.getEmployerProfile);
 router.get('/:employerId/company', employerController.getCompanyInfo);
 
 // follow / unfollow candidate
-router.post('/:employerId/follow/:candidateId', jobController.followCandidate);
-router.delete('/:employerId/follow/:candidateId', jobController.unfollowCandidate);
+router.post('/:employerId/follow/:candidateId', employerController.followCandidate);
+router.delete('/:employerId/follow/:candidateId', employerController.unfollowCandidate);
 
 module.exports = router;
 
