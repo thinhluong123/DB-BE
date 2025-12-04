@@ -1,16 +1,17 @@
 const authService = require('../services/authService');
 const { successResponse } = require('../utils/response');
 
-const login = async (req, res, next) => {
+// Candidate auth
+const loginCandidate = async (req, res, next) => {
   try {
-    const data = await authService.login(req.body);
+    const data = await authService.loginCandidate(req.body);
     return successResponse(res, data, 'Đăng nhập thành công');
   } catch (error) {
     return next(error);
   }
 };
 
-const register = async (req, res, next) => {
+const registerCandidate = async (req, res, next) => {
   try {
     const data = await authService.registerCandidate(req.body);
     return successResponse(res, data, 'Đăng ký thành công', 201);
@@ -19,6 +20,26 @@ const register = async (req, res, next) => {
   }
 };
 
+// Employer auth
+const loginEmployer = async (req, res, next) => {
+  try {
+    const data = await authService.loginEmployer(req.body);
+    return successResponse(res, data, 'Đăng nhập thành công');
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const registerEmployer = async (req, res, next) => {
+  try {
+    const data = await authService.registerEmployer(req.body);
+    return successResponse(res, data, 'Đăng ký thành công', 201);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+// Common
 const logout = async (req, res, next) => {
   try {
     return successResponse(res, null, 'Đăng xuất thành công');
@@ -37,8 +58,10 @@ const getProfile = async (req, res, next) => {
 };
 
 module.exports = {
-  login,
-  register,
+  loginCandidate,
+  registerCandidate,
+  loginEmployer,
+  registerEmployer,
   logout,
   getProfile,
 };

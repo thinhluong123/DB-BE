@@ -6,69 +6,46 @@ Base URL: `/api`
 
 ### 1. Public (Homepage)
 
-- `GET /api/stats`  
-  - Mô tả: Lấy thống kê tổng quan cho homepage (Live Job, Companies, Candidates, New Jobs, Successful Hires).  
+- `GET /api/stats`
+
+  - Mô tả: Lấy thống kê tổng quan cho homepage (Live Job, Companies, Candidates, New Jobs, Successful Hires).
   - Trả về: **mảng** các object `{ icon, number, label }`.
 
-- `GET /api/categories`  
-  - Mô tả: Lấy danh sách category công việc với số lượng job đang mở.  
+- `GET /api/categories`
+
+  - Mô tả: Lấy danh sách category công việc với số lượng job đang mở.
   - Trả về: **mảng** `{ id, icon, name, openPositions, specialty }`.
 
-- `GET /api/companies/top`  
-  - Mô tả: Lấy danh sách công ty nổi bật cho homepage.  
-  - Query: `limit` (optional, default 8).  
+- `GET /api/companies/top`
+  - Mô tả: Lấy danh sách công ty nổi bật cho homepage.
+  - Query: `limit` (optional, default 8).
   - Trả về: **mảng** `{ CompanyID, CompanyName, Logo, CompanySize, Website, Description, Industry, CNationality, openPositions, rating }`.
 
 ---
 
 ### 2. Authentication
 
-#### 2.1. Auth chung
+#### 2.1. Candidate Authentication
 
-- `POST /api/auth/login`  
-  - Body:
-    ```json
-    {
-      "email": "string",
-      "password": "string",
-      "role": "candidate" | "employer" (optional)
-    }
-    ```
-  - Trả về:
-    ```json
-    {
-      "success": true,
-      "data": {
-        "token": "jwt-token",
-        "user": {
-          "id": 1,
-          "username": "user1",
-          "email": "user1@email.com",
-          "fullName": "Nguyen Van A",
-          "role": "candidate" | "employer",
-          "candidateId": 1,
-          "employerId": null
-        },
-        "role": "candidate"
-      },
-      "message": "Đăng nhập thành công"
-    }
-    ```
+- `POST /api/auth/register-candidate`
 
-- `POST /api/auth/register`  
-  - Mô tả: Đăng ký **ứng viên** (candidate).  
+  - Mô tả: Đăng ký tài khoản **ứng viên**.
   - Body:
     ```json
     {
       "fullName": "Nguyen Van A",
       "username": "candidate1",
       "email": "user@email.com",
-      "password": "123456"
+      "password": "123456",
+      "address": "Hà Nội",
+      "phone": "0123456789",
+      "Profile_Picture": "https://...",
+      "Bdate": "2000-01-01"
     }
     ```
   - Tác động DB:
     - Insert vào bảng `user`.
-    - Insert vào bảng `candidate` (ID = ID user).  
+    - Insert vào bảng `candidate` (ID = ID user).
   - Trả về:
     ```json
     {
@@ -90,11 +67,116 @@ Base URL: `/api`
     }
     ```
 
-- `POST /api/auth/logout`  
-  - Mô tả: Logout (stateless JWT – chủ yếu để frontend clear token).  
+- `POST /api/auth/login-candidate`
+  - Mô tả: Đăng nhập với tài khoản **ứng viên**.
+  - Body:
+    ```json
+    {
+      "email": "user@email.com",
+      "password": "123456"
+    }
+    ```
+  - Trả về:
+    ```json
+    {
+      "success": true,
+      "data": {
+        "token": "jwt-token",
+        "user": {
+          "id": 1,
+          "username": "candidate1",
+          "email": "user@email.com",
+          "fullName": "Nguyen Van A",
+          "role": "candidate",
+          "candidateId": 1,
+          "employerId": null
+        },
+        "role": "candidate"
+      },
+      "message": "Đăng nhập thành công"
+    }
+    ```
 
-- `GET /api/auth/profile`  
-  - Headers: `Authorization: Bearer {token}`  
+#### 2.2. Employer Authentication
+
+- `POST /api/auth/register-employer`
+
+  - Mô tả: Đăng ký tài khoản **doanh nghiệp**.
+  - Body:
+    ```json
+    {
+      "fullName": "Nguyen Van B",
+      "username": "employer1",
+      "email": "employer@email.com",
+      "password": "123456",
+      "address": "Hà Nội",
+      "phone": "0123456789",
+      "Profile_Picture": "https://...",
+      "Bdate": "2000-01-01"
+    }
+    ```
+  - Tác động DB:
+    - Insert vào bảng `user`.
+    - Insert vào bảng `employer` (ID = ID user).
+  - Trả về:
+    ```json
+    {
+      "success": true,
+      "data": {
+        "token": "jwt-token",
+        "user": {
+          "id": 2,
+          "username": "employer1",
+          "email": "employer@email.com",
+          "fullName": "Nguyen Van B",
+          "role": "employer",
+          "candidateId": null,
+          "employerId": 2
+        },
+        "role": "employer"
+      },
+      "message": "Đăng ký thành công"
+    }
+    ```
+
+- `POST /api/auth/login-employer`
+  - Mô tả: Đăng nhập với tài khoản **doanh nghiệp**.
+  - Body:
+    ```json
+    {
+      "email": "employer@email.com",
+      "password": "123456"
+    }
+    ```
+  - Trả về:
+    ```json
+    {
+      "success": true,
+      "data": {
+        "token": "jwt-token",
+        "user": {
+          "id": 2,
+          "username": "employer1",
+          "email": "employer@email.com",
+          "fullName": "Nguyen Van B",
+          "role": "employer",
+          "candidateId": null,
+          "employerId": 2
+        },
+        "role": "employer"
+      },
+      "message": "Đăng nhập thành công"
+    }
+    ```
+
+#### 2.3. Common Authentication
+
+- `POST /api/auth/logout`
+
+  - Mô tả: Logout (stateless JWT – chủ yếu để frontend clear token).
+
+- `GET /api/auth/profile`
+  - Headers: `Authorization: Bearer {token}`
   - Trả về thông tin user hiện tại (id, username, email, role, candidateId/employerId).
 
 > Lưu ý: Backend không có `/api/notifications/unread-count`, nên gọi vào sẽ 404.
@@ -105,11 +187,12 @@ Base URL: `/api`
 
 Base: `/api/jobs`
 
-- `GET /api/jobs`  
-  - Mô tả: Lấy danh sách job (cho trang tìm việc).  
+- `GET /api/jobs`
+
+  - Mô tả: Lấy danh sách job (cho trang tìm việc).
   - Query (tùy theo service hiện tại):
     - `page`, `limit`
-    - có thể thêm `keyword`, `location`, `jobType`, `contractType`, `level` (tùy frontend sử dụng).  
+    - có thể thêm `keyword`, `location`, `jobType`, `contractType`, `level` (tùy frontend sử dụng).
   - Trả về dạng:
     ```json
     {
@@ -121,40 +204,47 @@ Base: `/api/jobs`
     }
     ```
 
-- `GET /api/jobs/:jobId`  
-  - Mô tả: Lấy chi tiết 1 job (cho trang JobDetails / Apply).  
+- `GET /api/jobs/:jobId`
 
-- `POST /api/jobs`  
-  - Mô tả: Nhà tuyển dụng đăng job mới.  
-  - Body (theo schema `job` + `categories` + `skills`).  
+  - Mô tả: Lấy chi tiết 1 job (cho trang JobDetails / Apply).
+
+- `POST /api/jobs`
+
+  - Mô tả: Nhà tuyển dụng đăng job mới.
+  - Body (theo schema `job` + `categories` + `skills`).
   - Tạo bản ghi trong `job`, và các quan hệ trong bảng `in` (job_category) & `require` (skill).
 
-- `PATCH /api/jobs/:jobId/status`  
-  - Mô tả: Cập nhật trạng thái job (Active/Expired/Closed...).  
+- `PATCH /api/jobs/:jobId/status`
 
-- `DELETE /api/jobs/:jobId`  
-  - Mô tả: Xóa tin tuyển dụng.  
+  - Mô tả: Cập nhật trạng thái job (Active/Expired/Closed...).
 
-- `GET /api/jobs/:jobId/applications`  
-  - Mô tả: Lấy danh sách ứng tuyển cho job (cho Employer xem ứng viên).  
+- `DELETE /api/jobs/:jobId`
+
+  - Mô tả: Xóa tin tuyển dụng.
+
+- `GET /api/jobs/:jobId/applications`
+  - Mô tả: Lấy danh sách ứng tuyển cho job (cho Employer xem ứng viên).
 
 #### 3.1. Favorite / Apply / Check status (Candidate)
 
-- `POST /api/jobs/:jobId/favorite`  
-  - Mô tả: Ứng viên **yêu thích** job.  
-  - Body: `{ CandidateID: number }` hoặc lấy từ user/token (tùy cách gọi).  
+- `POST /api/jobs/:jobId/favorite`
+
+  - Mô tả: Ứng viên **yêu thích** job.
+  - Body: `{ CandidateID: number }` hoặc lấy từ user/token (tùy cách gọi).
   - DB: insert vào `favourite`.
 
-- `DELETE /api/jobs/:jobId/favorite`  
-  - Mô tả: Bỏ yêu thích job.  
+- `DELETE /api/jobs/:jobId/favorite`
 
-- `POST /api/jobs/:jobId/apply`  
-  - Mô tả: Ứng viên apply job.  
-  - Body: `{ CandidateID, CoverLetter, upLoadCV, ... }`.  
+  - Mô tả: Bỏ yêu thích job.
+
+- `POST /api/jobs/:jobId/apply`
+
+  - Mô tả: Ứng viên apply job.
+  - Body: `{ CandidateID, CoverLetter, upLoadCV, ... }`.
   - DB: insert/update bảng `apply`.
 
-- `GET /api/jobs/:jobId/check-status`  
-  - Mô tả: Xem trạng thái của ứng viên với job đó (đã favorite/apply chưa, có thể apply không).  
+- `GET /api/jobs/:jobId/check-status`
+  - Mô tả: Xem trạng thái của ứng viên với job đó (đã favorite/apply chưa, có thể apply không).
   - Trả về:
     ```json
     {
@@ -172,28 +262,33 @@ Base: `/api/jobs`
 
 Base: `/api/candidate`
 
-- `GET /api/candidate/dashboard`  
-  - Mô tả: Dashboard ứng viên (thông tin user, stats, recent applications).  
-  - Input: `{ candidateId }` (từ token/body).  
+- `GET /api/candidate/dashboard`
 
-- `POST /api/candidate/logout`  
-  - Mô tả: Endpoint logout cho candidate (frontend cũng có thể chỉ xóa token).  
+  - Mô tả: Dashboard ứng viên (thông tin user, stats, recent applications).
+  - Input: `{ candidateId }` (từ token/body).
 
-- `GET /api/candidate/applications`  
-  - Mô tả: Danh sách đơn ứng tuyển của candidate (có phân trang).  
-  - Query: `page`, `limit`.  
+- `POST /api/candidate/logout`
 
-- `GET /api/candidate/favorites`  
-  - Mô tả: Danh sách job yêu thích của candidate.  
+  - Mô tả: Endpoint logout cho candidate (frontend cũng có thể chỉ xóa token).
+
+- `GET /api/candidate/applications`
+
+  - Mô tả: Danh sách đơn ứng tuyển của candidate (có phân trang).
+  - Query: `page`, `limit`.
+
+- `GET /api/candidate/favorites`
+  - Mô tả: Danh sách job yêu thích của candidate.
 
 #### 4.1. Candidate Profile & Settings
 
-- `GET /api/candidate/profile`  
-  - Mô tả: Lấy full profile ứng viên cho trang hồ sơ (personal info, contact, settings,...).  
-  - Input: `{ candidateId }` (query/body hoặc lấy từ token).  
+- `GET /api/candidate/profile`
 
-- `PUT /api/candidate/profile`  
-  - Mô tả: Cập nhật profile (dùng chung cho các tab, gửi field nào cần update).  
+  - Mô tả: Lấy full profile ứng viên cho trang hồ sơ (personal info, contact, settings,...).
+  - Input: `{ candidateId }` (query/body hoặc lấy từ token).
+
+- `PUT /api/candidate/profile`
+
+  - Mô tả: Cập nhật profile (dùng chung cho các tab, gửi field nào cần update).
   - Body ví dụ:
     ```json
     {
@@ -205,8 +300,9 @@ Base: `/api/candidate`
     }
     ```
 
-- `POST /api/candidate/avatar`  
-  - Mô tả: Upload/đổi avatar (backend nhận URL/file info, chưa xử lý upload thực).  
+- `POST /api/candidate/avatar`
+
+  - Mô tả: Upload/đổi avatar (backend nhận URL/file info, chưa xử lý upload thực).
   - Body ví dụ:
     ```json
     {
@@ -215,11 +311,13 @@ Base: `/api/candidate`
     }
     ```
 
-- `GET /api/candidate/resumes`  
-  - Mô tả: Lấy danh sách CV đã lưu của ứng viên (map từ cột `profile.savedCv`).  
+- `GET /api/candidate/resumes`
 
-- `POST /api/candidate/resumes`  
-  - Mô tả: Upload/thêm CV mới, cập nhật cột `savedCv` trong bảng `profile`.  
+  - Mô tả: Lấy danh sách CV đã lưu của ứng viên (map từ cột `profile.savedCv`).
+
+- `POST /api/candidate/resumes`
+
+  - Mô tả: Upload/thêm CV mới, cập nhật cột `savedCv` trong bảng `profile`.
   - Body ví dụ:
     ```json
     {
@@ -228,11 +326,12 @@ Base: `/api/candidate`
     }
     ```
 
-- `DELETE /api/candidate/resumes/:id`  
-  - Mô tả: Xóa CV (thực tế đang set `savedCv = NULL` cho candidate).  
+- `DELETE /api/candidate/resumes/:id`
 
-- `PUT /api/candidate/password`  
-  - Mô tả: Đổi mật khẩu.  
+  - Mô tả: Xóa CV (thực tế đang set `savedCv = NULL` cho candidate).
+
+- `PUT /api/candidate/password`
+  - Mô tả: Đổi mật khẩu.
   - Body:
     ```json
     {
@@ -244,21 +343,25 @@ Base: `/api/candidate`
 
 #### 4.2. Candidate Notifications
 
-- `GET /api/candidate/notifications`  
-  - Mô tả: Lấy danh sách thông báo của ứng viên (từ bảng `notification`, filter theo `CandidateID`).  
-  - Query: `page`, `limit`, `type` (hiện type được trả mặc định là `"application"`).  
+- `GET /api/candidate/notifications`
 
-- `PUT /api/candidate/notifications/:id/read`  
-  - Mô tả: Đánh dấu 1 thông báo đã đọc (hiện chưa có cột trạng thái, đang là no-op).  
+  - Mô tả: Lấy danh sách thông báo của ứng viên (từ bảng `notification`, filter theo `CandidateID`).
+  - Query: `page`, `limit`, `type` (hiện type được trả mặc định là `"application"`).
 
-- `PUT /api/candidate/notifications/read-all`  
-  - Mô tả: Đánh dấu tất cả là đã đọc (no-op tương tự).  
+- `PUT /api/candidate/notifications/:id/read`
 
-- `DELETE /api/candidate/notifications/:id`  
-  - Mô tả: Xóa 1 thông báo của ứng viên.  
+  - Mô tả: Đánh dấu 1 thông báo đã đọc (hiện chưa có cột trạng thái, đang là no-op).
 
-- `GET /api/candidate/notifications/unread`  
-  - Mô tả: Lấy số lượng thông báo chưa đọc.  
+- `PUT /api/candidate/notifications/read-all`
+
+  - Mô tả: Đánh dấu tất cả là đã đọc (no-op tương tự).
+
+- `DELETE /api/candidate/notifications/:id`
+
+  - Mô tả: Xóa 1 thông báo của ứng viên.
+
+- `GET /api/candidate/notifications/unread`
+  - Mô tả: Lấy số lượng thông báo chưa đọc.
   - Hiện tại do chưa có cột `isRead`, backend trả `{ count: 0 }` để tránh lỗi frontend.
 
 ---
@@ -267,28 +370,35 @@ Base: `/api/candidate`
 
 Base: `/api/employer`
 
-- `GET /api/employer/:employerId/stats`  
-  - Mô tả: Lấy thống kê dashboard nhà tuyển dụng (số job đang mở, followers, applications...).  
+- `GET /api/employer/:employerId/stats`
 
-- `GET /api/employer/:employerId/jobs`  
-  - Mô tả: Lấy danh sách job của employer (có filter `status`, `page`, `limit`).  
+  - Mô tả: Lấy thống kê dashboard nhà tuyển dụng (số job đang mở, followers, applications...).
 
-- `GET /api/employer/:employerId/saved-candidates`  
-  - Mô tả: Lấy danh sách ứng viên đã lưu (follow).  
+- `GET /api/employer/:employerId/jobs`
 
-- `GET /api/employer/:employerId/notifications`  
-  - Mô tả: Lấy danh sách notification theo employer (không có unread-count riêng).  
+  - Mô tả: Lấy danh sách job của employer (có filter `status`, `page`, `limit`).
 
-- `GET /api/employer/:employerId/company`  
-  - Mô tả: Lấy thông tin company gắn với employer.  
+- `GET /api/employer/:employerId/saved-candidates`
 
-- `GET /api/employer/:employerId`  
-  - Mô tả: Lấy profile employer (user + package).  
+  - Mô tả: Lấy danh sách ứng viên đã lưu (follow).
 
-- `POST /api/employer/:employerId/follow/:candidateId`  
-  - Mô tả: Employer follow (lưu) ứng viên.  
+- `GET /api/employer/:employerId/notifications`
 
-- `DELETE /api/employer/:employerId/follow/:candidateId`  
+  - Mô tả: Lấy danh sách notification theo employer (không có unread-count riêng).
+
+- `GET /api/employer/:employerId/company`
+
+  - Mô tả: Lấy thông tin company gắn với employer.
+
+- `GET /api/employer/:employerId`
+
+  - Mô tả: Lấy profile employer (user + package).
+
+- `POST /api/employer/:employerId/follow/:candidateId`
+
+  - Mô tả: Employer follow (lưu) ứng viên.
+
+- `DELETE /api/employer/:employerId/follow/:candidateId`
   - Mô tả: Bỏ follow ứng viên.
 
 ---
@@ -297,15 +407,13 @@ Base: `/api/employer`
 
 Base: `/api/applications`
 
-- `PATCH /api/applications/:jobId/:candidateId/status`  
-  - Mô tả: Cập nhật trạng thái đơn ứng tuyển (`Status_apply`: Đang duyệt, Duyệt, Từ chối...).  
+- `PATCH /api/applications/:jobId/:candidateId/status`
+  - Mô tả: Cập nhật trạng thái đơn ứng tuyển (`Status_apply`: Đang duyệt, Duyệt, Từ chối...).
 
 ---
 
 ## Ghi chú
 
 - Tất cả endpoint đều được mount dưới `/api` trong `src/app.js`.
-- Một số API yêu cầu **JWT** trong header `Authorization: Bearer {token}` (phía frontend cần tự gắn).  
+- Một số API yêu cầu **JWT** trong header `Authorization: Bearer {token}` (phía frontend cần tự gắn).
 - Chưa có endpoint riêng `GET /api/notifications/unread-count` → nếu frontend gọi sẽ nhận 404 (không phải bug, mà do chưa implement).
-
-

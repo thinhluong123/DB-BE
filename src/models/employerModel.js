@@ -104,7 +104,7 @@ const getSavedCandidates = async (employerId, page = 1, limit = 20) => {
       u.FName,
       u.LName,
       u.Email,
-      u.Phonenume AS Phonenumber,
+      u.Phonenumber AS Phonenumber,
       u.Profile_Picture,
       u.Address,
       p.YearOfExperience,
@@ -181,7 +181,7 @@ const getEmployerProfile = async (employerId) => {
       u.Email,
       u.FName,
       u.LName,
-      u.Phonenume AS Phonenumber,
+      u.Phonenumber AS Phonenumber,
       u.Address,
       u.Profile_Picture,
       e.PackageName,
@@ -349,6 +349,9 @@ const updateJobStatus = async (jobId, status) => {
   return result.affectedRows || 0;
 };
 
+const createEmployer = async (userId) =>
+  executeQuery('INSERT INTO employer (ID) VALUES (?)', [userId]);
+
 module.exports = {
   getDashboardStats,
   getEmployerJobs,
@@ -362,5 +365,6 @@ module.exports = {
   deleteJobById,
   createJobRecord,
   updateJobStatus,
+  createEmployer,
 };
 

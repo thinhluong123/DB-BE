@@ -61,7 +61,7 @@ const getJobApplications = async (jobId, statusFilter, limit = 20, offset = 0) =
       u.FName,
       u.LName,
       u.Email,
-      u.Phonenume AS Phonenumber,
+      u.Phonenumber AS Phonenumber,
       u.Profile_Picture,
       u.Address,
       p.YearOfExperience,

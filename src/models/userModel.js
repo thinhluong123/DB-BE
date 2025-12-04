@@ -38,7 +38,7 @@ const createUser = async (payload) => {
     FName,
     LName,
     Address,
-    Phonenume,
+    Phonenumber,
     Profile_Picture,
     Bdate,
   } = payload;
@@ -53,12 +53,12 @@ const createUser = async (payload) => {
       LName,
       Created_date,
       Address,
-      Phonenume,
+      Phonenumber,
       Profile_Picture,
       Bdate
     ) VALUES (?, ?, ?, ?, ?, CURDATE(), ?, ?, ?, ?)
   `,
-    [Username, Email, Password, FName, LName, Address, Phonenume, Profile_Picture, Bdate],
+    [Username, Email, Password, FName, LName, Address, Phonenumber, Profile_Picture, Bdate],
   );
 
   return result.insertId;
