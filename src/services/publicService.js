@@ -48,6 +48,7 @@ const getTopCompanies = async (limit = 8) => {
   const companies = await companyModel.fetchTopCompanies(limit);
   return companies.map((company) => ({
     CompanyID: company.CompanyID,
+    EmployerID: company.EmployerID,
     CompanyName: company.CompanyName,
     Logo: company.Logo,
     CompanySize: company.CompanySize ? `${company.CompanySize.toLocaleString('en-US')} employees` : null,
@@ -56,7 +57,16 @@ const getTopCompanies = async (limit = 8) => {
     Industry: company.Industry,
     CNationality: company.CNationality,
     openPositions: Number(company.openPositions) || 0,
-    rating: company.rating ? Number(company.rating) : null,
+    TrustScore: company.TrustScore !== undefined ? Number(company.TrustScore) : null,
+    AvgReview: company.AvgReview !== undefined ? Number(company.AvgReview) : null,
+    TotalReview: company.TotalReview !== undefined ? Number(company.TotalReview) : 0,
+    FollowerCount: company.FollowerCount !== undefined ? Number(company.FollowerCount) : 0,
+    rating:
+      company.TrustScore !== undefined
+        ? Number(company.TrustScore)
+        : company.AvgReview !== undefined
+          ? Number(company.AvgReview)
+          : null,
   }));
 };
 

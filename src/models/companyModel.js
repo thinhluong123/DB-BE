@@ -10,23 +10,39 @@ const fetchTopCompanies = (limit = 8) => {
   const safeLimit = toSafeLimit(limit);
   return executeQuery(
     `
+    WITH ts AS (
+      SELECT
+        e.ID AS EmployerID,
+        c.CompanyID,
+        c.CName AS CompanyName,
+        c.Logo,
+        c.CompanySize,
+        c.Website,
+        c.Description,
+        c.Industry,
+        c.CNationality,
+        fn_TinhDiemUyTinEmployer(e.ID) AS json_result
+      FROM employer e
+      LEFT JOIN company c ON c.EmployerID = e.ID
+    )
     SELECT
-      c.CompanyID,
-      c.CName AS CompanyName,
-      c.Logo,
-      c.CompanySize,
-      c.Website,
-      c.Description,
-      c.Industry,
-      c.CNationality,
-      COUNT(DISTINCT CASE WHEN j.JobStatus IN ('OPEN', 'Active') AND j.ExpireDate >= CURDATE() THEN j.JobID END) AS openPositions,
-      ROUND(AVG(r.Rank), 1) AS rating
-    FROM company c
-    LEFT JOIN employer e ON e.ID = c.EmployerID
-    LEFT JOIN job j ON j.EmployerID = e.ID
-    LEFT JOIN review r ON r.EmployerID = e.ID
-    GROUP BY c.CompanyID
-    ORDER BY rating IS NULL, rating DESC, openPositions DESC
+      ts.CompanyID,
+      ts.CompanyName,
+      ts.Logo,
+      ts.CompanySize,
+      ts.Website,
+      ts.Description,
+      ts.Industry,
+      ts.CNationality,
+      CAST(JSON_EXTRACT(ts.json_result, '$.EmployerID') AS UNSIGNED) AS EmployerID,
+      CAST(JSON_EXTRACT(ts.json_result, '$.OpenJobCount') AS UNSIGNED) AS openPositions,
+      CAST(JSON_EXTRACT(ts.json_result, '$.TrustScore') AS DECIMAL(10,2)) AS TrustScore,
+      CAST(JSON_EXTRACT(ts.json_result, '$.AvgReview') AS DECIMAL(10,2)) AS AvgReview,
+      CAST(JSON_EXTRACT(ts.json_result, '$.TotalReview') AS UNSIGNED) AS TotalReview,
+      CAST(JSON_EXTRACT(ts.json_result, '$.FollowerCount') AS UNSIGNED) AS FollowerCount
+    FROM ts
+    WHERE ts.CompanyID IS NOT NULL
+    ORDER BY TrustScore DESC
     LIMIT ${safeLimit}
   `,
   );
