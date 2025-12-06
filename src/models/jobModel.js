@@ -9,6 +9,17 @@ const SORTING_MAP = {
   popular: 'j.NumberOfApplicant DESC',
 };
 
+// Helper function để normalize array từ query params
+const normalizeArray = (value) => {
+  if (!value) return null;
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'string') {
+    // Hỗ trợ cả comma-separated string
+    return value.split(',').map(item => item.trim()).filter(item => item);
+  }
+  return [value];
+};
+
 const buildJobFilters = (filters = {}) => {
   const conditions = [];
   const params = [];
@@ -21,7 +32,7 @@ const buildJobFilters = (filters = {}) => {
 
   if (filters.keyword) {
     const keyword = `%${filters.keyword}%`;
-    conditions.push('(j.JobName LIKE ? OR c.CName LIKE ? OR c.Industry LIKE ?)');
+    conditions.push('(j.JobName LIKE ? OR comp.CName LIKE ? OR comp.Industry LIKE ?)');
     params.push(keyword, keyword, keyword);
   }
 
@@ -30,19 +41,47 @@ const buildJobFilters = (filters = {}) => {
     params.push(`%${filters.location}%`);
   }
 
-  if (filters.jobType) {
-    conditions.push('j.JobType = ?');
-    params.push(filters.jobType);
+  // Hỗ trợ multiple jobType (array hoặc comma-separated)
+  const jobTypes = normalizeArray(filters.jobType);
+  if (jobTypes && jobTypes.length > 0) {
+    const placeholders = jobTypes.map(() => '?').join(',');
+    conditions.push(`j.JobType IN (${placeholders})`);
+    params.push(...jobTypes);
   }
 
-  if (filters.contractType) {
-    conditions.push('j.ContractType = ?');
-    params.push(filters.contractType);
+  // Hỗ trợ multiple contractType (array hoặc comma-separated)
+  const contractTypes = normalizeArray(filters.contractType);
+  if (contractTypes && contractTypes.length > 0) {
+    const placeholders = contractTypes.map(() => '?').join(',');
+    conditions.push(`j.ContractType IN (${placeholders})`);
+    params.push(...contractTypes);
   }
 
-  if (filters.level) {
-    conditions.push('j.Level = ?');
-    params.push(filters.level);
+  // Hỗ trợ multiple level (array hoặc comma-separated)
+  const levels = normalizeArray(filters.level);
+  if (levels && levels.length > 0) {
+    const placeholders = levels.map(() => '?').join(',');
+    conditions.push(`j.Level IN (${placeholders})`);
+    params.push(...levels);
+  }
+
+  // Hỗ trợ salary range filter
+  if (filters.salaryMin !== undefined && filters.salaryMin !== null) {
+    const salaryMin = parseInt(filters.salaryMin, 10);
+    if (!Number.isNaN(salaryMin) && salaryMin > 0) {
+      // Job hiển thị nếu SalaryTo >= salaryMin (có giao nhau với khoảng filter)
+      conditions.push('j.SalaryTo >= ?');
+      params.push(salaryMin);
+    }
+  }
+
+  if (filters.salaryMax !== undefined && filters.salaryMax !== null) {
+    const salaryMax = parseInt(filters.salaryMax, 10);
+    if (!Number.isNaN(salaryMax) && salaryMax > 0) {
+      // Job hiển thị nếu SalaryFrom <= salaryMax (có giao nhau với khoảng filter)
+      conditions.push('j.SalaryFrom <= ?');
+      params.push(salaryMax);
+    }
   }
 
   if (filters.employerId) {

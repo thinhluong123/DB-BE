@@ -3,13 +3,27 @@ const jobModel = require('../models/jobModel');
 const { getPaginationParams, buildPaginationMeta } = require('../utils/pagination');
 const { formatCurrencyRange, formatDate, buildJobStatistics } = require('../utils/formatters');
 
+// Helper function để parse array từ query params
+// Express tự động parse ?jobType=value1&jobType=value2 thành array
+// Hoặc có thể là comma-separated string: ?jobType=value1,value2
+const parseArrayParam = (value) => {
+  if (!value) return null;
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'string' && value.includes(',')) {
+    return value.split(',').map(item => item.trim()).filter(item => item);
+  }
+  return value;
+};
+
 const parseJobFilters = (query = {}) => ({
   status: query.status || 'all',
   keyword: query.search || query.keyword || '',
   location: query.location,
-  jobType: query.jobType,
-  contractType: query.contractType,
-  level: query.level,
+  jobType: parseArrayParam(query.jobType),
+  contractType: parseArrayParam(query.contractType),
+  level: parseArrayParam(query.level),
+  salaryMin: query.salaryMin || query.salary_min,
+  salaryMax: query.salaryMax || query.salary_max,
 });
 
 const listJobs = async (query) => {
