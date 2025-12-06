@@ -17,9 +17,9 @@ Base URL: `/api`
   - Trả về: **mảng** `{ id, icon, name, openPositions, specialty }`.
 
 - `GET /api/companies/top`
-  - Mô tả: Lấy danh sách công ty nổi bật cho homepage.
+  - Mô tả: Lấy danh sách công ty nổi bật cho homepage, sắp xếp theo TrustScore.
   - Query: `limit` (optional, default 8).
-  - Trả về: **mảng** `{ CompanyID, CompanyName, Logo, CompanySize, Website, Description, Industry, CNationality, openPositions, rating }`.
+  - Trả về: **mảng** `{ CompanyID, CompanyName, Logo, CompanySize, Website, Description, Industry, CNationality, openPositions, rating, EmployerID, TrustScore, AvgReview, TotalReview, FollowerCount }`.
 
 ---
 
@@ -399,7 +399,23 @@ Base: `/api/employer`
   - Mô tả: Employer follow (lưu) ứng viên.
 
 - `DELETE /api/employer/:employerId/follow/:candidateId`
+
   - Mô tả: Bỏ follow ứng viên.
+
+- `POST /api/employer/purchase`
+
+  - Mô tả: Employer mua gói dịch vụ (package).
+  - Body:
+    ```json
+    {
+      "employerId": 1,
+      "packageId": 2
+    }
+    ```
+
+- `GET /api/employer/:employerId/packages`
+  - Mô tả: Lấy danh sách gói dịch vụ mà employer đã mua.
+  - Trả về: **mảng** các package với thông tin gói và trạng thái.
 
 ---
 
@@ -409,6 +425,41 @@ Base: `/api/applications`
 
 - `PATCH /api/applications/:jobId/:candidateId/status`
   - Mô tả: Cập nhật trạng thái đơn ứng tuyển (`Status_apply`: Đang duyệt, Duyệt, Từ chối...).
+
+---
+
+### 7. Package APIs (Gói dịch vụ)
+
+Base: `/api/packages`
+
+- `GET /api/packages`
+  - Mô tả: Lấy danh sách tất cả các gói dịch vụ có sẵn cho employer.
+  - Trả về: **mảng** `{ PackageID, PackageName, Price, Duration, Features, ... }`.
+
+---
+
+### 8. Payment APIs (Thanh toán)
+
+Base: `/api/payments`
+
+- `POST /api/payments/create-payos-link`
+
+  - Mô tả: Tạo link thanh toán PayOS cho gói dịch vụ.
+  - Body:
+    ```json
+    {
+      "orderCode": 123456,
+      "amount": 100000,
+      "description": "Mua gói Premium",
+      "returnUrl": "https://...",
+      "cancelUrl": "https://..."
+    }
+    ```
+  - Trả về: Link thanh toán PayOS.
+
+- `GET /api/payments/:orderId/status`
+  - Mô tả: Kiểm tra trạng thái thanh toán theo orderId.
+  - Trả về: `{ status: "PAID" | "PENDING" | "CANCELLED", ... }`.
 
 ---
 

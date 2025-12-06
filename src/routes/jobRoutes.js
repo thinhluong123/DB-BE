@@ -7,7 +7,9 @@ const candidateController = require('../controllers/candidateController');
 const router = express.Router();
 
 router.get('/', jobController.getJobs);
+
 router.post('/', employerController.createJob);
+router.patch('/:jobId', jobController.updateJob);
 router.patch('/:jobId/status', employerController.updateJobStatus);
 router.delete('/:jobId', employerController.deleteJob);
 router.get('/:jobId/applications', applicationController.getJobApplications);

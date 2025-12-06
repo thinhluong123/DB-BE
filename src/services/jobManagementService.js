@@ -63,6 +63,50 @@ const updateJobStatus = async (jobIdRaw, status) => {
   };
 };
 
+const updateJob = async (jobIdRaw, payload) => {
+  const jobId = parseInt(jobIdRaw, 10);
+  if (Number.isNaN(jobId)) {
+    throw createHttpError(400, 'JobID phải là số');
+  }
+
+  // Kiểm tra job có tồn tại không
+  const existingJob = await jobModel.fetchJobById(jobId);
+  if (!existingJob) {
+    throw createHttpError(404, 'Job không tồn tại');
+  }
+
+  // Validate các trường nếu có trong payload
+  if (payload.SalaryFrom !== undefined && payload.SalaryTo !== undefined) {
+    if (payload.SalaryFrom <= 0 || payload.SalaryTo <= payload.SalaryFrom) {
+      throw createHttpError(400, 'SalaryFrom phải > 0 và SalaryTo phải > SalaryFrom');
+    }
+  }
+
+  if (payload.Quantity !== undefined && payload.Quantity < 1) {
+    throw createHttpError(400, 'Quantity phải >= 1');
+  }
+
+  if (payload.PostDate && payload.ExpireDate) {
+    const postDate = new Date(payload.PostDate);
+    const expireDate = new Date(payload.ExpireDate);
+    if (expireDate <= postDate) {
+      throw createHttpError(400, 'ExpireDate phải > PostDate');
+    }
+  }
+
+  await employerModel.updateJobRecord(jobId, payload);
+
+  const updatedJob = await jobModel.fetchJobById(jobId);
+  return {
+    JobID: jobId,
+    JobName: updatedJob?.JobName,
+    JobStatus: updatedJob?.JobStatus,
+    PostDate: formatDate(updatedJob?.PostDate),
+    ExpireDate: formatDate(updatedJob?.ExpireDate),
+    UpdatedAt: new Date().toISOString(),
+  };
+};
+
 const deleteJob = async (jobIdRaw) => {
   const jobId = parseInt(jobIdRaw, 10);
   if (Number.isNaN(jobId)) {
@@ -101,6 +145,7 @@ const mapJobToResponse = (job) => ({
 module.exports = {
   createJob,
   updateJobStatus,
+  updateJob,
   deleteJob,
   mapJobToResponse,
 };

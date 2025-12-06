@@ -27,8 +27,19 @@ const getJobById = async (req, res, next) => {
   }
 };
 
+const updateJob = async (req, res, next) => {
+  try {
+    const jobManagementService = require('../services/jobManagementService');
+    const updatedJob = await jobManagementService.updateJob(req.params.jobId, req.body);
+    return successResponse(res, updatedJob, 'Job updated successfully');
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   getJobs,
   getJobById,
+  updateJob,
 };
 

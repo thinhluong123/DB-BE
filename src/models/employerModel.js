@@ -350,6 +350,95 @@ const updateJobStatus = async (jobId, status) => {
   return result.affectedRows || 0;
 };
 
+const updateJobRecord = async (jobId, payload) => {
+  const connection = await getConnection();
+  try {
+    await connection.beginTransaction();
+
+    // Xây dựng câu lệnh UPDATE động dựa trên các trường có trong payload
+    const updateFields = [];
+    const updateValues = [];
+
+    const allowedFields = [
+      'JobName',
+      'JD',
+      'JobType',
+      'ContractType',
+      'Level',
+      'Quantity',
+      'SalaryFrom',
+      'SalaryTo',
+      'RequiredExpYear',
+      'Location',
+      'PostDate',
+      'ExpireDate',
+      'JobStatus',
+    ];
+
+    // eslint-disable-next-line no-restricted-syntax
+    for (const field of allowedFields) {
+      if (payload[field] !== undefined && payload[field] !== null) {
+        if (field === 'Level') {
+          updateFields.push('`Level` = ?');
+        } else {
+          updateFields.push(`${field} = ?`);
+        }
+        updateValues.push(payload[field]);
+      }
+    }
+
+    if (updateFields.length > 0) {
+      updateValues.push(jobId);
+      const updateSql = `UPDATE job SET ${updateFields.join(', ')} WHERE JobID = ?`;
+      const result = await connection.execute(updateSql, updateValues);
+      if (result.affectedRows === 0) {
+        throw createHttpError(404, 'Job không tồn tại');
+      }
+    }
+
+    // Cập nhật categories nếu có
+    if (Array.isArray(payload.categories)) {
+      // Xóa categories cũ
+      await connection.execute('DELETE FROM `in` WHERE JobID = ?', [jobId]);
+      // Thêm categories mới
+      if (payload.categories.length > 0) {
+        const categorySql = 'INSERT INTO `in` (JobID, JCName) VALUES (?, ?)';
+        // eslint-disable-next-line no-restricted-syntax
+        for (const category of payload.categories) {
+          // eslint-disable-next-line no-await-in-loop
+          await connection.execute(categorySql, [jobId, category]);
+        }
+      }
+    }
+
+    // Cập nhật skills nếu có
+    if (Array.isArray(payload.skills)) {
+      // Xóa skills cũ
+      await connection.execute('DELETE FROM `require` WHERE JobID = ?', [jobId]);
+      // Thêm skills mới
+      if (payload.skills.length > 0) {
+        const skillSql = 'INSERT INTO `require` (JobID, SkillName) VALUES (?, ?)';
+        // eslint-disable-next-line no-restricted-syntax
+        for (const skill of payload.skills) {
+          // eslint-disable-next-line no-await-in-loop
+          await connection.execute(skillSql, [jobId, skill]);
+        }
+      }
+    }
+
+    await connection.commit();
+    return true;
+  } catch (error) {
+    await connection.rollback();
+    if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+      throw createHttpError(400, 'Invalid category or skill reference');
+    }
+    throw error;
+  } finally {
+    connection.release();
+  }
+};
+
 const createEmployer = async (userId) =>
   executeQuery('INSERT INTO employer (ID) VALUES (?)', [userId]);
 
@@ -366,6 +455,7 @@ module.exports = {
   deleteJobById,
   createJobRecord,
   updateJobStatus,
+  updateJobRecord,
   createEmployer,
 };
 
