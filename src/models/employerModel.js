@@ -396,31 +396,21 @@ const updateJobRecord = async (jobId, payload) => {
       }
     }
 
-    // Cập nhật categories nếu có
     if (Array.isArray(payload.categories)) {
-      // Xóa categories cũ
       await connection.execute('DELETE FROM `in` WHERE JobID = ?', [jobId]);
-      // Thêm categories mới
       if (payload.categories.length > 0) {
         const categorySql = 'INSERT INTO `in` (JobID, JCName) VALUES (?, ?)';
-        // eslint-disable-next-line no-restricted-syntax
         for (const category of payload.categories) {
-          // eslint-disable-next-line no-await-in-loop
           await connection.execute(categorySql, [jobId, category]);
         }
       }
     }
 
-    // Cập nhật skills nếu có
     if (Array.isArray(payload.skills)) {
-      // Xóa skills cũ
       await connection.execute('DELETE FROM `require` WHERE JobID = ?', [jobId]);
-      // Thêm skills mới
       if (payload.skills.length > 0) {
         const skillSql = 'INSERT INTO `require` (JobID, SkillName) VALUES (?, ?)';
-        // eslint-disable-next-line no-restricted-syntax
         for (const skill of payload.skills) {
-          // eslint-disable-next-line no-await-in-loop
           await connection.execute(skillSql, [jobId, skill]);
         }
       }
